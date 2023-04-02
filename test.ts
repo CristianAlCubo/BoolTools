@@ -3,30 +3,22 @@ import {OperatorNode, VariableNode, BooleanTree} from './Node'
 
 //(x+y)(wy)
 
-let x = new VariableNode(false,'x')
-let y = new VariableNode(true,'y')
-let w = new VariableNode(false,'w')
-
-let nand1 = new OperatorNode('*',null,null)
-let nand2 = new OperatorNode('*',null,null)
-let nand3 = new OperatorNode('*',null,null)
-let nor = new OperatorNode('+',null,null)
+const notn = new OperatorNode('¬',null,null)
+const nor = new OperatorNode('+',null,null)
+const nand = new OperatorNode('*',null,null)
+const w = new VariableNode(false,'w')
+const x = new VariableNode(false,'x')
 
 nor.left = x
-nor.right = y
-nand3.left = w
-nand3.right = y
+nor.right = w
 
-nand2.left = w
-nand2.right = nand3
+notn.right = nor
 
-nand1.left = nor
-nand1.right = nand2
+nand.left = x
+nand.right = notn
 
-let bTree = new BooleanTree(nand1)
+let bTree = new BooleanTree(nand)
 
 bTree.calculateValue()
 bTree.print()
-
-
 

@@ -23,18 +23,17 @@ export class OperatorNode extends Nodo{
         this.truthValue = false
     }
 
-    public calculateValue() : boolean{
+    public calculateValue(){
+        this.left?.calculateValue()
+        this.right?.calculateValue()
         if(this.symbol === '+'){
-            this.truthValue = (this.left?.calculateValue() || this.right?.calculateValue()) ? true : false
+            this.truthValue = (this.left?.truthValue|| this.right?.truthValue) ? true : false
         }else if(this.symbol === '¬'){
-            this.truthValue = !(this.right?.calculateValue())
+            this.truthValue = !(this.right?.truthValue)
         }else if(this.symbol === '*'){
-            this.truthValue = (this.left?.calculateValue() && this.right?.calculateValue()) ? true : false
+            this.truthValue = (this.left?.truthValue && this.right?.truthValue) ? true : false
         }
-        return this.truthValue
     }   
-
-    
 }
 
 export class VariableNode extends Nodo{
@@ -46,6 +45,7 @@ export class VariableNode extends Nodo{
     }
 
     public calculateValue() : boolean{
+        console.log("Executing depth for "+this.symbol)
         return this.truthValue
     }
 }   
@@ -55,8 +55,8 @@ export class BooleanTree{
     constructor(root: OperatorNode){
         this.root = root
     }
-    public calculateValue() : boolean{
-        return this.root.calculateValue()
+    public calculateValue(){
+        this.root.calculateValue()
     }
 
     public print(){
