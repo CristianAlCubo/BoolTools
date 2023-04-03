@@ -4,14 +4,19 @@ export interface Data{
 }
 export class BooleanChart{
     private tree:BooleanTree
-    private data:Data[] = []
+    public data:Data[] = []
     
 
     constructor(tree : BooleanTree){
         this.tree = tree
+        this.calculateChart()
     }
 
-    public calculateChart(){
+    public print(){
+        console.table(this.data)
+    }
+
+    private calculateChart(){
         const inputKeys = Object.keys(this.tree.inputs)
         let permutations:string[] = this.inputPermutations(inputKeys.length)
         while(permutations.length > 0){
@@ -28,7 +33,6 @@ export class BooleanChart{
             }
             this.data.push(permutationData)
         }
-        return this.data
     }
 
     private inputPermutations(nInputs: number): string[] {

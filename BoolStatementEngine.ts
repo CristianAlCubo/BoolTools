@@ -1,179 +1,117 @@
 import { OperatorNode, VariableNode, InputNodes, BooleanTree } from "./BooleanTree"
+import { LinkedList, Nodo } from "./LinkedList"
+
+export enum OperatorHierarchy{
+    '+' = 1,
+    '°' = 2,
+    '*' = 3,
+    '¬' = 4
+}
 
 export class Parser{
     public rawStmnt: string
-    private preFormatStmnt: string
-    private parseQueue: string[] = []
-    private operations: string[] = []
-    private primitives: string[] = []
-    private buildingNodes: OperatorNode[] = []
-    private inputs: InputNodes = {}
-    private outputs: OperatorNode[] = []
+    public preFormatStmnt: string
+    public postFixStmnt: string
+    public treeRoot: OperatorNode
+    private operatorStack: string[] = []
+    private treeStack: (VariableNode|OperatorNode)[] = []
+    
 
-    private operators:string[] = ['+','*','¬']
+    private variablePattern = /[a-zA-Z0]/
+    private operatorPattern = /[\*¬+°]/
 
     constructor(rawStmnt : string){
         this.rawStmnt = rawStmnt
         this.preFormat()
-    }
-    private preFormat(){ 
-        let rawStmntArr = this.rawStmnt.split('')
-        for (let i = 0; i < this.rawStmnt.length - 1; i++) {
-            if(/[a-zA-Z)]/.test(rawStmntArr[i]) && /[a-zA-Z(¬]/.test(rawStmntArr[i+1])){
-                this.insertAt(rawStmntArr, i+1, '*')
-            }
-        }
-        this.preFormatStmnt = rawStmntArr.join('')
-    }
-
-    public parse(){
-        this.parseQueue.push(this.removeParentheses(this.preFormatStmnt))
-        while(this.parseQueue.length > 0){
-            const stmnt = this.parseQueue[0]
-            this.parseQueue.shift()
-            if(stmnt[0] === '('){
-                let operatorFound = false
-                for (const operator of this.operators) {
-                    let parenthesisCount = 0
-                    let i = 0
-                    for (const char of stmnt) {
-                        if(char == '(') parenthesisCount++
-                        if(char == ')') parenthesisCount--
-                        if(char == operator && parenthesisCount==0){
-                            const {fHalf, sHalf} = this.sliceStatement(stmnt,i)
-                            this.operations.push(stmnt[i])
-                            this.parseQueue.push(this.removeParentheses(fHalf))
-                            this.parseQueue.push(this.removeParentheses(sHalf))
-                            operatorFound = true
-                            break;
-                        }
-                        i++;
-                    }
-                    if(operatorFound) break
-                }
-            }else{
-                if(stmnt.length == 1){
-                    this.primitives.push(stmnt)
-                }else{
-                    for (const operator of this.operators) {
-                        let i = 0
-                        let operatorFound = false
-                        for (const char of stmnt) {
-                            if(char == operator){
-                                const {fHalf, sHalf} = this.sliceStatement(stmnt,i)
-                                this.operations.push(stmnt[i])
-                                this.parseQueue.push(this.removeParentheses(fHalf))
-                                this.parseQueue.push(this.removeParentheses(sHalf))
-                                operatorFound = true
-                                break;
-                            }
-                            i++;
-                        }
-                        if(operatorFound) break
-                    }                    
-                }
-            }
-        }
-    
+        this.toPostFix()
         this.assembleTree()
-        return new BooleanTree(this.outputs.pop() as OperatorNode)
     }
 
     private assembleTree(){
-        while(this.operations.length > 0){
-            const operator = this.operations.pop() as string
-            if(operator == '¬'){
-                if(this.primitives.length > 0){
-                    const operand = this.primitives.pop() as string
-                    if(!(operand in this.inputs)){
-                        this.inputs[operand] = new VariableNode(false,operand)
-                    }
-                    const node = new OperatorNode('¬')
-                    node.right = this.inputs[operand]
-                    this.buildingNodes.push(node)
-                    this.outputs.push(node)
-                }else{
-                    const operand = this.buildingNodes.shift() as OperatorNode
-                    const node = new OperatorNode('¬')
-                    node.right = operand
-                    this.buildingNodes.push(node)
-                    this.outputs.push(node)
+        let inputs:InputNodes = {}
+        for(const char of this.postFixStmnt){
+            if(this.variablePattern.test(char)){
+                if(!(char in inputs)){
+                    inputs[char] = new VariableNode(false,char)
                 }
-            }else{
-                if(this.primitives.length > 0){
-                    // Definir operandos del nodo
-                    let operand1 = this.primitives.pop() as string
-                    if(!(operand1 in this.inputs)){
-                        this.inputs[operand1] = new VariableNode(false,operand1)
+                this.treeStack.push(inputs[char])
+            }else if(this.operatorPattern.test(char)){
+                let operand1 = this.treeStack.pop()
+                let operand2 = this.treeStack.pop()
+                let operator = new OperatorNode(char)
+                if(operand1 && operand2){
+                    operator.right = operand1
+                    if(char != '¬'){
+                        operator.left = operand2
                     }
-                    const node = new OperatorNode(operator)
-                    node.left = this.inputs[operand1]
-                    if(this.primitives.length > 0){
-                        let operand2 = this.primitives.pop() as string
-                        if(!(operand2 in this.inputs)){
-                            this.inputs[operand2] = new VariableNode(false,operand2)
-                        }
-                        // Definir operacion del nodo y vincular operandos
-                        node.right = this.inputs[operand2]
-                        this.buildingNodes.push(node)
-                        this.outputs.push(node)
-                    }else{
-                        // Definir operacion del nodo y vincular operandos
-                        let operand2 = this.buildingNodes.shift() as OperatorNode
-                        node.right = operand2
-                        this.buildingNodes.push(node)
-                        this.outputs.push(node)
-                    }
-                }else{
-                    // Definir operandos del nodo
-                    let operand1 = this.buildingNodes.shift() as OperatorNode
-                    let operand2 = this.buildingNodes.shift() as OperatorNode
+                }
+                this.treeStack.push(operator)
+            }
+        }
+        const treeRoot = this.treeStack.pop()
+        if(treeRoot) this.treeRoot = treeRoot
+    }   
 
-                    // Definir operacion del nodo y vincular operandos
-                    const node = new OperatorNode(operator)
-                    node.left = operand1
-                    node.right = operand2
-                    this.buildingNodes.push(node)
-                    this.outputs.push(node)
+    private toPostFix(){
+        let postFixString = ""
+        for (const char of this.preFormatStmnt) {
+            const stackTail = this.operatorStack[this.operatorStack.length - 1] 
+            if(this.variablePattern.test(char)){
+                postFixString += char
+            }else if(this.operatorPattern.test(char)){
+                if(this.operatorStack.length == 0){
+                    this.operatorStack.push(char)
+                }else{
+                    if(stackTail == '(' || OperatorHierarchy[stackTail] < OperatorHierarchy[char]){
+                        this.operatorStack.push(char)
+                    }else if(OperatorHierarchy[stackTail] >= OperatorHierarchy[char]){
+                        const operator = this.operatorStack.pop()
+                        postFixString += operator
+                        this.operatorStack.push(char)
+                    }
+                }
+            }else if(char == '('){
+                this.operatorStack.push(char)
+            }else if(char == ')'){
+                let operator = this.operatorStack.pop()
+                while(operator != '('){
+                    postFixString += operator
+                    operator = this.operatorStack.pop()
                 }
             }
         }
-    }
-
-    private removeParentheses(stmnt:string){
-        const doubleParenthesesPattern = /^\([a-zA-Z+\*¬\(\)]+\)[+\*¬]?\([a-zA-Z+\*¬\(\)]+\)$/
-        if(doubleParenthesesPattern.test(stmnt)){
-            return stmnt
-        }else if(stmnt[0] == '(' && stmnt[stmnt.length - 1] == ')'){
-            //Remove outer parenthesis
-            let parenthesisCount = 0
-            for (let i = 0; i < stmnt.length - 1; i++) {
-                if(stmnt[i] == '(' && stmnt[i+1] == '(') {
-                    parenthesisCount++
-                }else{
-                    break;
-                }
-            } 
-            if(parenthesisCount > 0) {
-                stmnt = stmnt.slice(0+parenthesisCount,0-parenthesisCount)
-            }else{
-                stmnt = stmnt.slice(1,-1)
+        if(this.operatorStack.length > 0){
+            while(this.operatorStack.length > 0){
+                let operator = this.operatorStack.pop()
+                if(operator != '(') postFixString += operator
             }
         }
-        return stmnt
-}
-
-    private sliceStatement(stmnt:string,index:number){
-        const fHalf = stmnt.slice(0,index)
-        const sHalf = stmnt.slice(index+1)
-        return {fHalf:fHalf, sHalf:sHalf}
+        this.postFixStmnt = postFixString
     }
 
-    private insertAt<T>(array: T[], index: number, element: T): T[] {
-        for (let i = array.length - 1; i >= index; i--) {
-          array[i + 1] = array[i];
+    private preFormat(){ 
+        const charactersLL = new LinkedList()
+        // Pasar los datos del input a una lista enlazada
+        for (const char of this.rawStmnt) {
+            charactersLL.addLast(char)
         }
-        array[index] = element;
-        return array;
-      }
+        let node = charactersLL.head
+        let i = 0
+
+        // Añadir los operadores explicitos
+        while(node != null && i < charactersLL.size - 1){
+            if(/[a-zA-Z]|[\)]/g.test(node.value as string)){
+                if(/[a-zA-Z]|[0¬\(]/g.test(node.next?.value as string)){
+                    charactersLL.addAtIndex(i+1,'*')
+                    charactersLL.printRelations()
+                } 
+            }else if(node.value as string == '¬'){
+                charactersLL.addAtIndex(i,'0')
+                i++
+            }
+            node = node.next
+            i++
+        }
+        this.preFormatStmnt = charactersLL.toString()
+    }
 }

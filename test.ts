@@ -1,4 +1,4 @@
-import {OperatorNode, VariableNode, BooleanTree} from './BooleanTree'
+import { OperatorNode, VariableNode, BooleanTree } from './BooleanTree'
 import { BooleanChart } from './BooleanChart'
 import { Parser } from './BoolStatementEngine'
 
@@ -34,10 +34,16 @@ import { Parser } from './BoolStatementEngine'
 // console.log(parser.removeParentheses('¬x+(y+w)'))
 // console.log(parser.removeParentheses('(y+w)'))
 
-const eq = '(x¬y+wx)'
-let parser = new Parser(eq)
-const bTree2 = parser.parse()
-let bChart2 = new BooleanChart(bTree2)
-console.log(eq)
-bTree2.print()
-console.table(bChart2.calculateChart())
+const eq = 'x°y+wx'
+//const eq = '(x*y*w)'
+// const eq = '((xy)(x+y)(x+(x¬y)))°(x°¬y)'
+//console.log(eq)
+
+const tree = new BooleanTree(eq)
+console.log("RAW EXPRESSION ==> "+eq)
+console.log('EXPLICIT OPERATORS EXPRESSION ==> '+tree.explicitOperatorsStmnt)
+console.log('POSTFIX EXPRESSION ==> '+tree.postfixStatement)
+console.group('TREE DIAGRAM: \n\n')
+tree.print()
+console.group('\n\n')
+tree.truthChart.print()

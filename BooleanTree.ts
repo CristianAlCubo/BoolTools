@@ -1,3 +1,6 @@
+import { Parser } from "./BoolStatementEngine"
+import { BooleanChart } from "./BooleanChart"
+
 export interface InputNodes{
     [inputKey : string] : VariableNode
 }
@@ -36,6 +39,8 @@ export class OperatorNode extends Nodo{
             this.truthValue = !(this.right?.truthValue)
         }else if(this.symbol === '*'){
             this.truthValue = (this.left?.truthValue && this.right?.truthValue) ? true : false
+        }else if(this.symbol === '°'){
+            this.truthValue = (this.left?.truthValue != this.right?.truthValue) ? true : false
         }
     }   
 }
@@ -55,16 +60,27 @@ export class VariableNode extends Nodo{
 
 
 export class BooleanTree{
-    bredthNodes : (VariableNode|OperatorNode)[]
-    root: OperatorNode
-    inputs: InputNodes = {}
-    outputs: OperatorNode[] = []
-    constructor(root: OperatorNode){
-        this.root = root
+    public bredthNodes : (VariableNode|OperatorNode)[]
+    public root: OperatorNode
+    public inputs: InputNodes = {}
+    public outputs: OperatorNode[] = []
+    public rawStatement: string
+    public postfixStatement: string
+    public explicitOperatorsStmnt: string
+    public truthChart:BooleanChart
+
+    private parser:Parser 
+    constructor(stmnt: string){
+        this.parser = new Parser(stmnt)
+        this.root = this.parser.treeRoot
+        this.rawStatement = stmnt
+        this.postfixStatement = this.parser.postFixStmnt
+        this.explicitOperatorsStmnt = this.parser.preFormatStmnt
         this.calculateValue()
         this.initSubTreeSymbols(this.root)
         this.bredthNodes = this.bredthTraversal()
         this.defineInputsAndOutputsNodes()
+        this.truthChart = new BooleanChart(this)
     }
 
     public info(){
@@ -100,7 +116,7 @@ export class BooleanTree{
     private recursivePrint(treeRoot: OperatorNode | VariableNode | null, depth: number){
         if(treeRoot){
             const nodeType = treeRoot.constructor.prototype.constructor.name
-            const nodeData = `${treeRoot.symbol} (${treeRoot.truthValue})`
+            const nodeData = `${treeRoot.symbol}`
             if(depth == 0){
                 console.log(nodeData)
              }else if(depth >= 1){
@@ -119,10 +135,10 @@ export class BooleanTree{
             this.initSubTreeSymbols(root.left)
             this.initSubTreeSymbols(root.right)
             if(root.symbol === '+'){
-                root.subtreeSymbol = root.right?.subtreeSymbol + root.symbol + root.left?.subtreeSymbol
+                root.subtreeSymbol = root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol
             }else if(root.symbol === '¬'){
                 root.subtreeSymbol = (root.right?.subtreeSymbol.length == 1 ) ? root.symbol + root.right?.subtreeSymbol : root.symbol + '(' +root.right?.subtreeSymbol+')'
-            }else if(root.symbol === '*'){
+            }else if(root.symbol === '*' || root.symbol === '°'){
                 root.subtreeSymbol = (root.right?.subtreeSymbol.length == 1  ) ? root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol : root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol
                 let left = ''
                 let right = ''
@@ -132,7 +148,7 @@ export class BooleanTree{
                 if(root.right?.subtreeSymbol.length){
                     right = (root.right.subtreeSymbol.length > 1) ? `(${root.right.subtreeSymbol})` : root.right.subtreeSymbol
                 }
-                root.subtreeSymbol = right+root.symbol+left
+                root.subtreeSymbol = left+root.symbol+right
             }else{
                 root.subtreeSymbol = root.symbol
             }
