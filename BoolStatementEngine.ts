@@ -1,4 +1,4 @@
-import { OperatorNode, VariableNode, InputNodes } from "./BooleanTree"
+import { OperatorNode, VariableNode, InputNodes, BooleanTree } from "./BooleanTree"
 
 export class Parser{
     public rawStmnt: string
@@ -6,7 +6,7 @@ export class Parser{
     private parseQueue: string[] = []
     private operations: string[] = []
     private primitives: string[] = []
-    private nodes: string[] = []
+    private buildingNodes: OperatorNode[] = []
     private inputs: InputNodes = {}
     private outputs: OperatorNode[] = []
 
@@ -74,11 +74,73 @@ export class Parser{
                 }
             }
         }
-        console.log(this.operations)
-        console.log(this.primitives)
+    
+        this.assembleTree()
+        return new BooleanTree(this.outputs.pop() as OperatorNode)
     }
 
-    public removeParentheses(stmnt:string){
+    private assembleTree(){
+        while(this.operations.length > 0){
+            const operator = this.operations.pop() as string
+            if(operator == '¬'){
+                if(this.primitives.length > 0){
+                    const operand = this.primitives.pop() as string
+                    if(!(operand in this.inputs)){
+                        this.inputs[operand] = new VariableNode(false,operand)
+                    }
+                    const node = new OperatorNode('¬')
+                    node.right = this.inputs[operand]
+                    this.buildingNodes.push(node)
+                    this.outputs.push(node)
+                }else{
+                    const operand = this.buildingNodes.shift() as OperatorNode
+                    const node = new OperatorNode('¬')
+                    node.right = operand
+                    this.buildingNodes.push(node)
+                    this.outputs.push(node)
+                }
+            }else{
+                if(this.primitives.length > 0){
+                    // Definir operandos del nodo
+                    let operand1 = this.primitives.pop() as string
+                    if(!(operand1 in this.inputs)){
+                        this.inputs[operand1] = new VariableNode(false,operand1)
+                    }
+                    const node = new OperatorNode(operator)
+                    node.left = this.inputs[operand1]
+                    if(this.primitives.length > 0){
+                        let operand2 = this.primitives.pop() as string
+                        if(!(operand2 in this.inputs)){
+                            this.inputs[operand2] = new VariableNode(false,operand2)
+                        }
+                        // Definir operacion del nodo y vincular operandos
+                        node.right = this.inputs[operand2]
+                        this.buildingNodes.push(node)
+                        this.outputs.push(node)
+                    }else{
+                        // Definir operacion del nodo y vincular operandos
+                        let operand2 = this.buildingNodes.shift() as OperatorNode
+                        node.right = operand2
+                        this.buildingNodes.push(node)
+                        this.outputs.push(node)
+                    }
+                }else{
+                    // Definir operandos del nodo
+                    let operand1 = this.buildingNodes.shift() as OperatorNode
+                    let operand2 = this.buildingNodes.shift() as OperatorNode
+
+                    // Definir operacion del nodo y vincular operandos
+                    const node = new OperatorNode(operator)
+                    node.left = operand1
+                    node.right = operand2
+                    this.buildingNodes.push(node)
+                    this.outputs.push(node)
+                }
+            }
+        }
+    }
+
+    private removeParentheses(stmnt:string){
         const doubleParenthesesPattern = /^\([a-zA-Z+\*¬\(\)]+\)[+\*¬]?\([a-zA-Z+\*¬\(\)]+\)$/
         if(doubleParenthesesPattern.test(stmnt)){
             return stmnt

@@ -31,7 +31,7 @@ export class BooleanChart{
         return this.data
     }
 
-    public inputPermutations(nInputs: number): string[] {
+    private inputPermutations(nInputs: number): string[] {
         let permutations: string[] = []
         for (let i = 0; i < 2**nInputs; i++) {
             let iBinary = i.toString(2);  // Convierte numero decimal en binario

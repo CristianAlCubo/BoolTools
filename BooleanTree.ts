@@ -22,8 +22,8 @@ export class Nodo {
 
 export class OperatorNode extends Nodo{
 
-    constructor(symbol: string, left: OperatorNode | VariableNode | null, right: OperatorNode | VariableNode | null){
-        super(left, right,symbol)
+    constructor(symbol: string){
+        super(null, null,symbol)
         this.truthValue = false
     }
 
@@ -119,11 +119,20 @@ export class BooleanTree{
             this.initSubTreeSymbols(root.left)
             this.initSubTreeSymbols(root.right)
             if(root.symbol === '+'){
-                root.subtreeSymbol = root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol
+                root.subtreeSymbol = root.right?.subtreeSymbol + root.symbol + root.left?.subtreeSymbol
             }else if(root.symbol === '¬'){
-                root.subtreeSymbol = (root.right?.subtreeSymbol.length == 1 ) ? root.symbol + root.right?.subtreeSymbol: root.symbol + '(' +root.right?.subtreeSymbol+')'
+                root.subtreeSymbol = (root.right?.subtreeSymbol.length == 1 ) ? root.symbol + root.right?.subtreeSymbol : root.symbol + '(' +root.right?.subtreeSymbol+')'
             }else if(root.symbol === '*'){
-                root.subtreeSymbol = root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol
+                root.subtreeSymbol = (root.right?.subtreeSymbol.length == 1  ) ? root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol : root.left?.subtreeSymbol + root.symbol + root.right?.subtreeSymbol
+                let left = ''
+                let right = ''
+                if(root.left?.subtreeSymbol.length){
+                    left = (root.left.subtreeSymbol.length > 1) ? `(${root.left.subtreeSymbol})` : root.left.subtreeSymbol
+                }
+                if(root.right?.subtreeSymbol.length){
+                    right = (root.right.subtreeSymbol.length > 1) ? `(${root.right.subtreeSymbol})` : root.right.subtreeSymbol
+                }
+                root.subtreeSymbol = right+root.symbol+left
             }else{
                 root.subtreeSymbol = root.symbol
             }
