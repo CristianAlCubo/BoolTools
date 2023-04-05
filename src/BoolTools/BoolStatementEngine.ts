@@ -1,5 +1,5 @@
-import { OperatorNode, VariableNode, InputNodes, BooleanTree } from "./BooleanTree"
-import { LinkedList, Nodo } from "./LinkedList"
+import { OperatorNode, VariableNode, InputNodes } from "./BooleanTree"
+import { LinkedList } from "./LinkedList"
 
 export enum OperatorHierarchy{
     '+' = 1,
@@ -10,9 +10,9 @@ export enum OperatorHierarchy{
 
 export class Parser{
     public rawStmnt: string
-    public preFormatStmnt: string
-    public postFixStmnt: string
-    public treeRoot: OperatorNode
+    public preFormatStmnt!: string
+    public postFixStmnt!: string
+    public treeRoot!: OperatorNode 
     private operatorStack: string[] = []
     private treeStack: (VariableNode|OperatorNode)[] = []
     
@@ -55,7 +55,7 @@ export class Parser{
     private toPostFix(){
         let postFixString = ""
         for (const char of this.preFormatStmnt) {
-            const stackTail = this.operatorStack[this.operatorStack.length - 1] 
+            const stackTail:string = this.operatorStack[this.operatorStack.length - 1] 
             if(this.variablePattern.test(char)){
                 postFixString += char
             }else if(this.operatorPattern.test(char)){
@@ -103,7 +103,6 @@ export class Parser{
             if(/[a-zA-Z]|[\)]/g.test(node.value as string)){
                 if(/[a-zA-Z]|[0¬\(]/g.test(node.next?.value as string)){
                     charactersLL.addAtIndex(i+1,'*')
-                    charactersLL.printRelations()
                 } 
             }else if(node.value as string == '¬'){
                 charactersLL.addAtIndex(i,'0')

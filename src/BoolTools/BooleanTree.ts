@@ -5,9 +5,9 @@ export interface InputNodes{
     [inputKey : string] : VariableNode
 }
 export class Nodo {
-    public truthValue: boolean
+    public truthValue!: boolean
     public symbol: string
-    public subtreeSymbol: string
+    public subtreeSymbol!: string
     public left: OperatorNode | VariableNode | null;
     public right: OperatorNode | VariableNode | null;
 

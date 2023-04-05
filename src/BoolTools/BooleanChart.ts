@@ -1,4 +1,4 @@
-import { VariableNode, OperatorNode, BooleanTree } from "./BooleanTree"
+import { BooleanTree } from "./BooleanTree"
 export interface Data{
     [key: string]:string|number
 }
