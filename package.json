@@ -15,6 +15,7 @@
     "syntactic",
     "trees"
   ],
+  "type": "module",
   "author": "Cristian Cubillos",
   "license": "ISC",
   "repository": {
