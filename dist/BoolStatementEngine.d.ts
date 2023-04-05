@@ -1,9 +1,6 @@
 import { OperatorNode } from "./BooleanTree";
-export declare enum OperatorHierarchy {
-    '+' = 1,
-    '°' = 2,
-    '*' = 3,
-    '¬' = 4
+export interface StringNumberMap {
+    [key: string]: number;
 }
 export declare class Parser {
     rawStmnt: string;
@@ -14,6 +11,7 @@ export declare class Parser {
     private treeStack;
     private variablePattern;
     private operatorPattern;
+    private OperatorHierarchy;
     constructor(rawStmnt: string);
     private assembleTree;
     private toPostFix;

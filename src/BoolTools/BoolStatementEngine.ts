@@ -1,11 +1,8 @@
 import { OperatorNode, VariableNode, InputNodes } from "./BooleanTree"
 import { LinkedList } from "./LinkedList"
 
-export enum OperatorHierarchy{
-    '+' = 1,
-    '°' = 2,
-    '*' = 3,
-    '¬' = 4
+export interface StringNumberMap{
+    [key:string]:number
 }
 
 export class Parser{
@@ -16,9 +13,14 @@ export class Parser{
     private operatorStack: string[] = []
     private treeStack: (VariableNode|OperatorNode)[] = []
     
-
     private variablePattern = /[a-zA-Z0]/
     private operatorPattern = /[\*¬+°]/
+    private OperatorHierarchy:StringNumberMap = {
+        '+':1,
+        '°':2,
+        '*':3,
+        '¬':4
+    }
 
     constructor(rawStmnt : string){
         this.rawStmnt = rawStmnt
@@ -55,16 +57,16 @@ export class Parser{
     private toPostFix(){
         let postFixString = ""
         for (const char of this.preFormatStmnt) {
-            const stackTail:string = this.operatorStack[this.operatorStack.length - 1] 
+            const stackTail = this.operatorStack[this.operatorStack.length - 1] 
             if(this.variablePattern.test(char)){
                 postFixString += char
             }else if(this.operatorPattern.test(char)){
                 if(this.operatorStack.length == 0){
                     this.operatorStack.push(char)
                 }else{
-                    if(stackTail == '(' || OperatorHierarchy[stackTail] < OperatorHierarchy[char]){
+                    if(stackTail == '(' || this.OperatorHierarchy[stackTail] < this.OperatorHierarchy[char]){
                         this.operatorStack.push(char)
-                    }else if(OperatorHierarchy[stackTail] >= OperatorHierarchy[char]){
+                    }else if(this.OperatorHierarchy[stackTail] >= this.OperatorHierarchy[char]){
                         const operator = this.operatorStack.pop()
                         postFixString += operator
                         this.operatorStack.push(char)
